@@ -9,6 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@liveblocks/client": "^3.15.2",
+    "@liveblocks/react": "^3.15.2",
+    "@liveblocks/react-ui": "^3.15.2",
+    "@phosphor-icons/react": "^2.1.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "html-to-image": "^1.11.13",

@@ -4,6 +4,29 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Liveblocks dark theme overrides for hospitality-safe */
+.lb-root[data-theme="dark"] {
+  --lb-accent: #31AD52;
+  --lb-accent-foreground: #fff;
+  --lb-background: #0A0A12;
+  --lb-foreground: #cbd5e1;
+  --lb-muted: #1A1A28;
+  --lb-muted-foreground: #64748b;
+  --lb-border: #1A1A28;
+  color-scheme: dark;
+}
+.lb-root[data-theme="dark"] .lb-composer-editor {
+  background: #1A1A28;
+  color: #cbd5e1;
+  font-size: 11px;
+}
+.lb-root[data-theme="dark"] .lb-thread {
+  background: transparent;
+}
+.lb-root[data-theme="dark"] .lb-comment {
+  background: transparent;
+}
+
 :root {
   /* MA Brand */
   --ma-bg: #F7F8FA;
