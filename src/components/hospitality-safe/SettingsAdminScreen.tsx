@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DocSection } from "@/app/projects/hospitality-safe/page";
+import { DocSection } from "@/lib/hospitality-safe-docs";
 
 /* ─── types ─── */
 type View = "main" | "edit-org" | "edit-location";

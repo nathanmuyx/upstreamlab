@@ -1,71 +1,80 @@
 "use client";
 
-import { useState } from "react";
-import { DocSection, DocNote, RoleTable } from "@/app/projects/hospitality-safe/page";
+import { useState, useEffect } from "react";
+import { DocSection, DocNote } from "@/lib/hospitality-safe-docs";
 
 /* ─── types ─── */
-type ViewId = "dashboard" | "calendar" | "records";
+type View = "list" | "unit-detail" | "add-record" | "pin-auth" | "temp-warning" | "alerts";
 
-const views: { id: ViewId; label: string }[] = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "calendar", label: "Calendar" },
-  { id: "records", label: "Records" },
-];
+const stepMap: Record<View, number> = {
+  list: 1,
+  "unit-detail": 2,
+  "add-record": 3,
+  "pin-auth": 4,
+  "temp-warning": 5,
+  alerts: 6,
+};
 
 /* ─── unit data ─── */
 interface TempUnit {
   name: string;
-  icon: string;
-  temp: string;
-  tempNum: number;
-  safeRange: string;
+  min: string;
+  avg: string;
+  max: string;
+  minNum: number;
+  avgNum: number;
+  maxNum: number;
   safeMin: number;
   safeMax: number;
-  method: "auto" | "bluetooth" | "manual";
-  lastReading: string;
+  status: "red" | "orange" | "green" | "grey";
+  timer: string;
 }
 
 const units: TempUnit[] = [
-  { name: "Coolroom 1", icon: "\u2744\uFE0F", temp: "3.2\u00B0C", tempNum: 3.2, safeRange: "0\u20135\u00B0C", safeMin: 0, safeMax: 5, method: "auto", lastReading: "10 min ago" },
-  { name: "Coolroom 2", icon: "\u2744\uFE0F", temp: "4.8\u00B0C", tempNum: 4.8, safeRange: "0\u20135\u00B0C", safeMin: 0, safeMax: 5, method: "auto", lastReading: "10 min ago" },
-  { name: "Freezer 1", icon: "\u2744\uFE0F", temp: "-18.5\u00B0C", tempNum: -18.5, safeRange: "-15 to -25\u00B0C", safeMin: -25, safeMax: -15, method: "auto", lastReading: "10 min ago" },
-  { name: "Freezer 2", icon: "\u2744\uFE0F", temp: "-12.1\u00B0C", tempNum: -12.1, safeRange: "-15 to -25\u00B0C", safeMin: -25, safeMax: -15, method: "auto", lastReading: "5 min ago" },
-  { name: "Fridge 1", icon: "\uD83C\uDF21", temp: "2.1\u00B0C", tempNum: 2.1, safeRange: "0\u20135\u00B0C", safeMin: 0, safeMax: 5, method: "bluetooth", lastReading: "30 min ago" },
-  { name: "Hot Display", icon: "\uD83D\uDD25", temp: "66.2\u00B0C", tempNum: 66.2, safeRange: "60\u2013100\u00B0C", safeMin: 60, safeMax: 100, method: "manual", lastReading: "1 hour ago" },
+  { name: "Cool Room", min: "2.80°C", avg: "3.75°C", max: "5.80°C", minNum: 2.8, avgNum: 3.75, maxNum: 5.8, safeMin: 0, safeMax: 5, status: "green", timer: "0.00h" },
+  { name: "Freezer Room", min: "-20.90°C", avg: "-20.10°C", max: "-18.66°C", minNum: -20.9, avgNum: -20.1, maxNum: -18.66, safeMin: -25, safeMax: -15, status: "red", timer: "0.00h" },
+  { name: "Grill U/B Fridge", min: "4.80°C", avg: "4.90°C", max: "5.00°C", minNum: 4.8, avgNum: 4.9, maxNum: 5.0, safeMin: 0, safeMax: 5, status: "red", timer: "0.00h" },
+  { name: "Keg Room", min: "", avg: "", max: "", minNum: 0, avgNum: 0, maxNum: 0, safeMin: 0, safeMax: 5, status: "grey", timer: "0.00h" },
+  { name: "Larder U/B Fridge", min: "21.70°C", avg: "21.83°C", max: "21.00°C", minNum: 21.7, avgNum: 21.83, maxNum: 21.0, safeMin: 0, safeMax: 5, status: "red", timer: "0.00h" },
+  { name: "Pans / Fryer U/B Fridge", min: "3.70°C", avg: "3.79°C", max: "3.90°C", minNum: 3.7, avgNum: 3.79, maxNum: 3.9, safeMin: 0, safeMax: 5, status: "red", timer: "0.00h" },
+  { name: "Pasta draw Freezer", min: "-16.80°C", avg: "-15.46°C", max: "-13.70°C", minNum: -16.8, avgNum: -15.46, maxNum: -13.7, safeMin: -25, safeMax: -15, status: "red", timer: "0.00h" },
+  { name: "Pasta Draw Fridge", min: "4.20°C", avg: "4.36°C", max: "4.60°C", minNum: 4.2, avgNum: 4.36, maxNum: 4.6, safeMin: 0, safeMax: 5, status: "red", timer: "0.00h" },
+  { name: "Pasta U/B fridge", min: "3.40°C", avg: "4.25°C", max: "5.20°C", minNum: 3.4, avgNum: 4.25, maxNum: 5.2, safeMin: 0, safeMax: 5, status: "red", timer: "0.00h" },
+  { name: "Pizza u/B Fridge", min: "3.30°C", avg: "3.43°C", max: "3.60°C", minNum: 3.3, avgNum: 3.43, maxNum: 3.6, safeMin: 0, safeMax: 5, status: "red", timer: "0.00h" },
+  { name: "Upright Freezer 1", min: "-17.40°C", avg: "-14.44°C", max: "-12.60°C", minNum: -17.4, avgNum: -14.44, maxNum: -12.6, safeMin: -25, safeMax: -15, status: "red", timer: "0.00h" },
+  { name: "Upright freezer 2", min: "-17.20°C", avg: "-15.18°C", max: "-13.80°C", minNum: -17.2, avgNum: -15.18, maxNum: -13.8, safeMin: -25, safeMax: -15, status: "red", timer: "0.00h" },
 ];
 
-const methodIcons: Record<string, { icon: string; label: string }> = {
-  auto: { icon: "\uD83D\uDCE1", label: "Auto Sensor" },
-  bluetooth: { icon: "\uD83D\uDCF1", label: "Bluetooth" },
-  manual: { icon: "\u270F\uFE0F", label: "Manual" },
-};
-
-function isInRange(u: TempUnit): boolean {
-  return u.tempNum >= u.safeMin && u.tempNum <= u.safeMax;
+/* ─── unit detail data (Cool Room hourly records) ─── */
+interface HourlyRecord {
+  min: string;
+  avg: string;
+  max: string;
+  timeRange: string;
+  type: string;
+  minNum: number;
+  maxNum: number;
+  safeMin: number;
+  safeMax: number;
 }
 
-/* ─── schedule data ─── */
-const scheduleItems = [
-  { status: "done", label: "Morning Check \u2013 Coolroom 1", time: "8:00 AM", temp: "3.2\u00B0C", user: "Sarah C." },
-  { status: "done", label: "Morning Check \u2013 Coolroom 2", time: "8:05 AM", temp: "4.8\u00B0C", user: "Sarah C." },
-  { status: "done", label: "Morning Check \u2013 Freezer 1", time: "8:10 AM", temp: "-18.5\u00B0C", user: "James L." },
-  { status: "overdue", label: "Morning Check \u2013 Freezer 2", time: "8:15 AM", temp: "Overdue (25 min)", user: "" },
-  { status: "upcoming", label: "Afternoon Check \u2013 All Units", time: "2:00 PM", temp: "Upcoming", user: "" },
-  { status: "upcoming", label: "Evening Check \u2013 All Units", time: "6:00 PM", temp: "Upcoming", user: "" },
+const coolRoomRecords: HourlyRecord[] = [
+  { min: "2.80°C", avg: "3.51°C", max: "4.70°C", timeRange: "00:00 am to 00:59 am", type: "Sensor", minNum: 2.8, maxNum: 4.7, safeMin: 0, safeMax: 5 },
+  { min: "2.90°C", avg: "3.77°C", max: "5.00°C", timeRange: "01:00 am to 01:59 am", type: "Sensor", minNum: 2.9, maxNum: 5.0, safeMin: 0, safeMax: 5 },
+  { min: "2.80°C", avg: "3.75°C", max: "5.00°C", timeRange: "02:00 am to 02:59 am", type: "Sensor", minNum: 2.8, maxNum: 5.0, safeMin: 0, safeMax: 5 },
 ];
 
-/* ─── records data ─── */
-const recordsData = [
-  { dateTime: "16/03, 10:30 AM", unit: "Coolroom 1", temp: "3.2\u00B0C", method: "Auto Sensor", result: "Pass", user: "System", corrective: "\u2014" },
-  { dateTime: "16/03, 10:30 AM", unit: "Coolroom 2", temp: "4.8\u00B0C", method: "Auto Sensor", result: "Pass", user: "System", corrective: "\u2014" },
-  { dateTime: "16/03, 10:30 AM", unit: "Freezer 1", temp: "-18.5\u00B0C", method: "Auto Sensor", result: "Pass", user: "System", corrective: "\u2014" },
-  { dateTime: "16/03, 10:25 AM", unit: "Freezer 2", temp: "-12.1\u00B0C", method: "Auto Sensor", result: "Fail", user: "System", corrective: "Technician called" },
-  { dateTime: "16/03, 8:00 AM", unit: "Coolroom 1", temp: "3.2\u00B0C", method: "Auto Sensor", result: "Pass", user: "Sarah C.", corrective: "\u2014" },
-  { dateTime: "16/03, 9:15 AM", unit: "Hot Display", temp: "66.2\u00B0C", method: "Manual", result: "Pass", user: "James L.", corrective: "\u2014" },
-  { dateTime: "16/03, 8:30 AM", unit: "Fridge 1", temp: "2.1\u00B0C", method: "Bluetooth", result: "Pass", user: "Sarah C.", corrective: "\u2014" },
+/* out-of-range unit detail (Larder U/B Fridge or similar) */
+const outOfRangeRecords: HourlyRecord[] = [
+  { min: "5.20°C", avg: "6.94°C", max: "9.00°C", timeRange: "04:00 am to 04:59 am", type: "Sensor", minNum: 5.2, maxNum: 9.0, safeMin: 0, safeMax: 5 },
+  { min: "3.90°C", avg: "5.03°C", max: "6.30°C", timeRange: "05:00 am to 05:59 am", type: "Sensor", minNum: 3.9, maxNum: 6.3, safeMin: 0, safeMax: 5 },
+  { min: "4.90°C", avg: "6.48°C", max: "9.20°C", timeRange: "06:00 am to 06:59 am", type: "Sensor", minNum: 4.9, maxNum: 9.2, safeMin: 0, safeMax: 5 },
+  { min: "7.20°C", avg: "9.04°C", max: "11.70°C", timeRange: "07:00 am to 07:59 am", type: "Sensor", minNum: 7.2, maxNum: 11.7, safeMin: 0, safeMax: 5 },
+  { min: "4.30°C", avg: "5.76°C", max: "7.40°C", timeRange: "08:00 am to 08:59 am", type: "Sensor", minNum: 4.3, maxNum: 7.4, safeMin: 0, safeMax: 5 },
+  { min: "3.20°C", avg: "4.13°C", max: "5.30°C", timeRange: "09:00 am to 09:59 am", type: "Sensor", minNum: 3.2, maxNum: 5.3, safeMin: 0, safeMax: 5 },
 ];
 
-/* ─── calendar helpers ─── */
+/* ─── calendar data ─── */
 function getCalendarDays(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -75,358 +84,785 @@ function getCalendarDays(year: number, month: number) {
   return days;
 }
 
-const calendarDots: Record<number, "green" | "red"> = {
-  1: "green", 2: "green", 3: "green", 4: "red", 5: "green",
-  6: "green", 7: "green", 8: "green", 9: "green", 10: "green",
-  11: "red", 12: "green", 13: "green", 14: "green", 15: "green",
-  16: "red",
+// January 2024 calendar dots matching Figma
+const calendarDots: Record<number, ("red" | "green")[]> = {
+  1: ["red"],
+  2: ["red"],
+  3: ["red"],
+  4: ["red"],
+  5: ["red"],
+  6: ["red"],
+  7: ["red"],
+  8: ["red"],
+  9: ["red"],
+  10: ["red"],
+  11: ["green"],
+  12: ["red"],
+  13: ["red"],
+  14: ["red"],
+  15: ["red"],
+  16: ["red"],
+  17: ["red"],
+  18: ["red", "green"],
+  19: ["red"],
+  20: ["red"],
+  21: ["green"],
+  22: ["green"],
+  23: ["green"],
+  24: ["green"],
+  25: ["green"],
+  26: ["green"],
+  27: [],
+  28: ["green"],
+  29: ["green", "red"],
+  30: ["red"],
+  31: ["red"],
 };
 
-/* ─── Mockup ─── */
-export function Mockup({ selectedArea }: { selectedArea: string }) {
-  const [activeView, setActiveView] = useState<ViewId>("dashboard");
+/* ─── alerts data ─── */
+const alertsData = [
+  { unit: "Cool Room", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:09 PM" },
+  { unit: "Cool Room", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:08 PM" },
+  { unit: "Freezer Room", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:08 PM" },
+  { unit: "Grill U/B Fridge", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:09 PM" },
+  { unit: "Upright Freezer 1", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:08 PM" },
+  { unit: "Larder U/B Fridge", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:09 PM" },
+  { unit: "Pans / Fryer U/B Fridge", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:08 PM" },
+  { unit: "Pasta draw Freezer", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:09 PM" },
+  { unit: "Pasta Draw Fridge", type: "SENSOR ALERT", msg: "Out of Temperature Range", time: "Today at 17:09 PM" },
+];
 
+/* ─── corrective actions ─── */
+const correctiveActions = [
+  "Maintenance Issue",
+  "Busy service period",
+  "Defrost Cycle",
+];
+
+/* ─── helpers ─── */
+function isOutOfRange(val: number, safeMin: number, safeMax: number) {
+  return val < safeMin || val > safeMax;
+}
+
+function tempColor(val: number, safeMin: number, safeMax: number) {
+  return isOutOfRange(val, safeMin, safeMax) ? "text-[#E74C3C]" : "text-[#27AE60]";
+}
+
+function statusColor(s: TempUnit["status"]) {
+  switch (s) {
+    case "red": return "bg-[#E74C3C]";
+    case "orange": return "bg-[#F39C12]";
+    case "green": return "bg-[#27AE60]";
+    case "grey": return "bg-[#CCCCCC]";
+  }
+}
+
+function BtnFill({ label, color, onClick }: { label: string; color?: string; onClick?: () => void }) {
   return (
-    <div className="p-5">
-      {/* Area indicator */}
-      {selectedArea !== "All Areas" && (
-        <div className="mb-3 text-[11px] text-[#2E75B6] font-medium">
-          Filtered: {selectedArea}
-        </div>
-      )}
-
-      {/* Top bar: view toggle + action button */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex rounded-lg overflow-hidden border border-[#E4E7EE]">
-          {views.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setActiveView(v.id)}
-              className={`px-4 py-2 text-[12px] font-medium cursor-pointer transition-colors ${
-                activeView === v.id
-                  ? "bg-[#2E75B6] text-white"
-                  : "bg-white text-[#666] hover:bg-[#F5F6FA]"
-              }`}
-            >
-              {v.label}
-            </button>
-          ))}
-        </div>
-        <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white text-[12px] font-semibold cursor-pointer hover:opacity-90 transition-colors" style={{ background: "#2E75B6" }}>
-          <span className="text-[14px]">+</span> Manual Check
-        </button>
-      </div>
-
-      {/* Views */}
-      {activeView === "dashboard" && <DashboardView />}
-      {activeView === "calendar" && <CalendarView />}
-      {activeView === "records" && <RecordsView />}
-    </div>
+    <button
+      onClick={onClick}
+      className="px-4 py-2 rounded text-white text-[11px] font-semibold cursor-pointer hover:opacity-90 transition-colors"
+      style={{ background: color || "#4A5FC1" }}
+    >
+      {label}
+    </button>
   );
 }
 
-/* ─── Dashboard View ─── */
-function DashboardView() {
+function BtnOutline({ label, onClick, active }: { label: string; onClick?: () => void; active?: boolean }) {
   return (
-    <>
-      {/* Unit Status Grid */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        {units.map((u) => {
-          const safe = isInRange(u);
-          const m = methodIcons[u.method];
-          return (
+    <button
+      onClick={onClick}
+      className={`px-4 py-2 rounded text-[11px] font-semibold cursor-pointer transition-colors border ${
+        active
+          ? "bg-[#4A5FC1] text-white border-[#4A5FC1]"
+          : "bg-white text-[#4A5FC1] border-[#4A5FC1] hover:bg-[#F0F2FF]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ─── Mockup ─── */
+export function Mockup({
+  selectedArea,
+  onSubStepChange,
+  currentStep,
+}: {
+  selectedArea: string;
+  onSubStepChange?: (step: number) => void;
+  currentStep?: number;
+  onNavigateScreen?: (id: string) => void;
+}) {
+  const [view, setView] = useState<View>("list");
+  const [selectedUnit, setSelectedUnit] = useState<TempUnit | null>(null);
+  const [addTab, setAddTab] = useState<"device" | "manual">("manual");
+  const [tempInput, setTempInput] = useState("");
+  const [pinDigits, setPinDigits] = useState<string[]>(["", "", "", ""]);
+  const [selectedAction, setSelectedAction] = useState("");
+  const [showActionDropdown, setShowActionDropdown] = useState(false);
+  const [calMonth, setCalMonth] = useState(0); // 0 = January 2024
+  const [calYear, setCalYear] = useState(2024);
+
+  const go = (v: View) => {
+    setView(v);
+    onSubStepChange?.(stepMap[v]);
+  };
+
+  // Sync from parent
+  useEffect(() => {
+    if (currentStep !== undefined) {
+      const m: Record<number, View> = { 1: "list", 2: "unit-detail", 3: "add-record", 4: "pin-auth", 5: "temp-warning", 6: "alerts" };
+      const expected = m[currentStep];
+      if (expected && expected !== view) setView(expected);
+    }
+  }, [currentStep]);
+
+  // Filter by area
+  const filteredUnits = selectedArea === "All Areas"
+    ? units
+    : units.filter((u) => u.name.toLowerCase().includes(selectedArea.toLowerCase()));
+
+  /* ─── LIST VIEW ─── */
+  if (view === "list") {
+    return (
+      <div className="p-5">
+        <h2 className="text-[18px] font-bold text-[#4A5FC1] text-center mb-1">Temperature Records</h2>
+        <p className="text-[11px] text-[#999] text-center mb-5">View and add temperature records for units.</p>
+
+        {/* Unit list */}
+        <div className="border border-[#E4E7EE] rounded-lg overflow-hidden">
+          {filteredUnits.map((u, i) => (
             <div
               key={u.name}
-              className={`bg-white rounded-lg p-3.5 shadow-sm border ${
-                safe ? "border-[#E4E7EE]" : "border-[#E74C3C] border-2"
+              className={`flex items-center px-4 py-3 cursor-pointer hover:bg-[#F5F6FA] transition-colors ${
+                i < filteredUnits.length - 1 ? "border-b border-[#E4E7EE]" : ""
               }`}
+              onClick={() => {
+                setSelectedUnit(u);
+                go("unit-detail");
+              }}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[14px]">{u.icon}</span>
-                  <span className="text-[12px] font-semibold text-[#333]">{u.name}</span>
-                </div>
-                {!safe && (
-                  <span className="text-[10px] font-bold text-[#E74C3C]">\u26A0\uFE0F Action Required</span>
+              {/* Unit name */}
+              <div className="w-[160px] shrink-0">
+                <span className="text-[12px] font-medium text-[#333]">{u.name}</span>
+              </div>
+
+              {/* MIN / AVG / MAX */}
+              <div className="flex items-center gap-4 flex-1 justify-center">
+                {u.min ? (
+                  <>
+                    <div className="text-center">
+                      <div className="text-[8px] text-[#999] uppercase tracking-wider">Min</div>
+                      <div className={`text-[11px] font-semibold ${tempColor(u.minNum, u.safeMin, u.safeMax)}`}>
+                        {u.min}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[8px] text-[#999] uppercase tracking-wider">Avg</div>
+                      <div className={`text-[11px] font-semibold ${tempColor(u.avgNum, u.safeMin, u.safeMax)}`}>
+                        {u.avg}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-[8px] text-[#999] uppercase tracking-wider">Max</div>
+                      <div className={`text-[11px] font-semibold ${tempColor(u.maxNum, u.safeMin, u.safeMax)}`}>
+                        {u.max}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-[11px] text-[#CCC]">&mdash;</div>
                 )}
               </div>
 
-              {/* Temperature */}
-              <div className={`text-center py-2.5 rounded-md mb-2 ${safe ? "bg-[#E8F8F0]" : "bg-[#FDE8E8]"}`}>
-                <div className={`text-[24px] font-black ${safe ? "text-[#27AE60]" : "text-[#E74C3C]"}`}>
-                  {u.temp}
-                </div>
-                {!safe && (
-                  <div className="text-[9px] font-bold text-[#E74C3C] uppercase tracking-[0.5px] mt-0.5">OUT OF RANGE</div>
-                )}
+              {/* Status indicator + timer + Add */}
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-[10px] text-[#999]">Today</span>
+                <span className={`w-3 h-3 rounded-sm ${statusColor(u.status)}`} />
+                <span className="text-[11px] text-[#333] font-mono">{u.timer}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedUnit(u);
+                    go("add-record");
+                  }}
+                  className="px-3 py-1 bg-[#4A5FC1] text-white text-[10px] font-semibold rounded cursor-pointer hover:opacity-90"
+                >
+                  Add
+                </button>
               </div>
-
-              {/* Details */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-[10px] text-[#666]">
-                  <span>Safe range: {u.safeRange}</span>
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-[#666]">
-                  <span>{m.icon} {m.label}</span>
-                  <span>{u.lastReading}</span>
-                </div>
-              </div>
-
-              {/* Status indicator */}
-              <div className="flex items-center gap-1 mt-2">
-                <span className={`w-1.5 h-1.5 rounded-full ${safe ? "bg-[#27AE60]" : "bg-[#E74C3C]"}`} />
-                <span className={`text-[10px] font-medium ${safe ? "text-[#27AE60]" : "text-[#E74C3C]"}`}>
-                  {safe ? "Normal" : "Alert"}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Today's Schedule */}
-      <div className="bg-white rounded-lg shadow-sm border border-[#E4E7EE]">
-        <div className="px-4 py-3 border-b border-[#E4E7EE]">
-          <h3 className="text-[13px] font-semibold text-[#333]">Today&apos;s Schedule</h3>
-        </div>
-        <div className="divide-y divide-[#F0F0F0]">
-          {scheduleItems.map((item, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-              {/* Status icon */}
-              <span className="text-[14px] w-5 text-center shrink-0">
-                {item.status === "done" ? "\u2705" : item.status === "overdue" ? "\u274C" : "\u23F3"}
-              </span>
-              {/* Label */}
-              <span className={`text-[12px] flex-1 ${
-                item.status === "overdue" ? "text-[#E74C3C] font-semibold" : "text-[#333]"
-              }`}>
-                {item.label}
-              </span>
-              {/* Time */}
-              <span className="text-[11px] text-[#999] w-[70px] shrink-0">{item.time}</span>
-              {/* Temp / status */}
-              <span className={`text-[11px] w-[110px] shrink-0 text-right font-medium ${
-                item.status === "overdue" ? "text-[#E74C3C]" :
-                item.status === "upcoming" ? "text-[#95A5A6]" : "text-[#333]"
-              }`}>
-                {item.temp}
-              </span>
-              {/* User */}
-              <span className="text-[11px] text-[#666] w-[70px] shrink-0 text-right">
-                {item.user || "\u2014"}
-              </span>
             </div>
           ))}
         </div>
       </div>
-    </>
-  );
-}
+    );
+  }
 
-/* ─── Calendar View ─── */
-function CalendarView() {
-  const days = getCalendarDays(2026, 2); // March 2026 (month index 2)
-  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  /* ─── UNIT DETAIL VIEW ─── */
+  if (view === "unit-detail" && selectedUnit) {
+    const isOutOfRangeUnit = selectedUnit.name === "Larder U/B Fridge" || selectedUnit.name === "Grill U/B Fridge";
+    const records = isOutOfRangeUnit ? outOfRangeRecords : coolRoomRecords;
+    const days = getCalendarDays(calYear, calMonth);
+    const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-[#E4E7EE] p-5">
-      {/* Month header */}
-      <div className="flex items-center justify-between mb-4">
-        <button className="text-[12px] text-[#666] hover:text-[#333] cursor-pointer px-2 py-1">&larr; Feb</button>
-        <h3 className="text-[14px] font-semibold text-[#333]">March 2026</h3>
-        <button className="text-[12px] text-[#666] hover:text-[#333] cursor-pointer px-2 py-1">Apr &rarr;</button>
-      </div>
-
-      {/* Weekday headers */}
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {weekdays.map((d) => (
-          <div key={d} className="text-center text-[10px] font-semibold text-[#999] py-1">{d}</div>
-        ))}
-      </div>
-
-      {/* Day cells */}
-      <div className="grid grid-cols-7 gap-1">
-        {days.map((day, i) => (
-          <div
-            key={i}
-            className={`h-[52px] rounded-md flex flex-col items-center justify-center text-[12px] ${
-              day ? "hover:bg-[#F5F6FA] cursor-pointer" : ""
-            } ${day === 16 ? "bg-[#2E75B6]/10 font-bold text-[#2E75B6]" : "text-[#333]"}`}
+    return (
+      <div className="p-5">
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-5">
+          <button
+            onClick={() => go("list")}
+            className="px-3 py-1.5 bg-[#4A5FC1] text-white text-[11px] font-semibold rounded cursor-pointer hover:opacity-90"
           >
-            {day && (
-              <>
-                <span>{day}</span>
-                {calendarDots[day] && (
-                  <span
-                    className={`w-2 h-2 rounded-full mt-1 ${
-                      calendarDots[day] === "green" ? "bg-[#27AE60]" : "bg-[#E74C3C]"
-                    }`}
-                  />
+            Back
+          </button>
+          <h2 className="text-[16px] font-bold text-[#4A5FC1]">{selectedUnit.name}</h2>
+          <button
+            onClick={() => go("add-record")}
+            className="px-3 py-1.5 bg-[#4A5FC1] text-white text-[11px] font-semibold rounded cursor-pointer hover:opacity-90"
+          >
+            Add Record
+          </button>
+        </div>
+
+        {/* Hourly records */}
+        <div className="space-y-3 mb-6">
+          {records.map((r, i) => {
+            const outMin = isOutOfRange(r.minNum, r.safeMin, r.safeMax);
+            const outMax = isOutOfRange(r.maxNum, r.safeMin, r.safeMax);
+            return (
+              <div key={i} className="border border-[#E4E7EE] rounded-lg p-4 bg-white">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-6">
+                    <div>
+                      <span className="text-[10px] text-[#999]">Min: </span>
+                      <span className={`text-[12px] font-semibold ${outMin ? "text-[#E74C3C]" : "text-[#4A5FC1]"}`}>{r.min}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#999]">Avg: </span>
+                      <span className={`text-[12px] font-semibold ${outMin || outMax ? "text-[#E74C3C]" : "text-[#4A5FC1]"}`}>{r.avg}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#999]">Max: </span>
+                      <span className={`text-[12px] font-semibold ${outMax ? "text-[#E74C3C]" : "text-[#4A5FC1]"}`}>{r.max}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-[#999]">{r.timeRange}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] text-[#999]">Type</div>
+                  <div className="text-[10px] text-[#333]">{r.type}</div>
+                </div>
+                {isOutOfRangeUnit && (
+                  <div className="mt-2 pt-2 border-t border-[#E4E7EE]">
+                    <button className="text-[10px] text-[#4A5FC1] font-medium cursor-pointer hover:underline">
+                      Corrective Action
+                    </button>
+                  </div>
                 )}
-              </>
+              </div>
+            );
+          })}
+
+          {/* Missing record placeholder */}
+          <div className="border border-[#E4E7EE] rounded-lg p-4 bg-white">
+            <p className="text-[11px] text-[#E74C3C]">No temperature record found for this check time.</p>
+          </div>
+        </div>
+
+        {/* Calendar */}
+        <div className="border border-[#E4E7EE] rounded-lg p-4 bg-white">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => {
+                if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); }
+                else setCalMonth(calMonth - 1);
+              }}
+              className="px-3 py-1 border border-[#4A5FC1] text-[#4A5FC1] text-[10px] font-semibold rounded cursor-pointer hover:bg-[#F0F2FF]"
+            >
+              Prev Month
+            </button>
+            <h3 className="text-[13px] font-semibold text-[#333]">
+              {monthNames[calMonth]} {calYear}
+            </h3>
+            <button
+              onClick={() => {
+                if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); }
+                else setCalMonth(calMonth + 1);
+              }}
+              className="px-3 py-1 border border-[#4A5FC1] text-[#4A5FC1] text-[10px] font-semibold rounded cursor-pointer hover:bg-[#F0F2FF]"
+            >
+              Next Month
+            </button>
+          </div>
+
+          {/* Weekday headers */}
+          <div className="grid grid-cols-7 gap-0">
+            {weekdays.map((d) => (
+              <div key={d} className="text-center text-[9px] font-semibold text-[#666] py-2 border-b border-[#E4E7EE]">
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Day cells */}
+          <div className="grid grid-cols-7 gap-0">
+            {days.map((day, i) => (
+              <div
+                key={i}
+                className={`min-h-[50px] border-b border-r border-[#E4E7EE] p-1 ${
+                  day === 29 && calMonth === 0 ? "bg-[#E8F0FE]" : ""
+                }`}
+              >
+                {day && (
+                  <>
+                    <div className="text-[10px] text-[#333] mb-1">{day}</div>
+                    {calMonth === 0 && calYear === 2024 && calendarDots[day] && (
+                      <div className="flex gap-0.5 flex-wrap">
+                        {calendarDots[day].map((color, ci) => (
+                          <span
+                            key={ci}
+                            className={`w-2.5 h-2.5 rounded-sm ${color === "green" ? "bg-[#27AE60]" : "bg-[#E74C3C]"}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── ADD RECORD VIEW ─── */
+  if (view === "add-record") {
+    return (
+      <div className="p-5 flex items-center justify-center min-h-[500px]">
+        <div className="w-[320px] bg-white rounded-lg border border-[#E4E7EE] p-6">
+          <h2 className="text-[16px] font-bold text-[#4A5FC1] text-center mb-1">Record Temperature</h2>
+          <p className="text-[11px] text-[#999] text-center mb-5">Record a temperature manually.</p>
+
+          {/* Tabs */}
+          <div className="flex gap-2 mb-5">
+            <BtnOutline label="Device Entry" onClick={() => setAddTab("device")} active={addTab === "device"} />
+            <BtnOutline label="Manual Entry" onClick={() => setAddTab("manual")} active={addTab === "manual"} />
+          </div>
+
+          {addTab === "device" ? (
+            /* Device Entry (Bluetooth) */
+            <div>
+              <p className="text-[11px] text-[#666] mb-3">Scanning for bluetooth devices...</p>
+              <div className="h-[60px] border border-[#E4E7EE] rounded-lg flex items-center justify-center mb-4">
+                <span className="text-[11px] text-[#999]">No devices found</span>
+              </div>
+              <div className="flex gap-2 justify-center">
+                <button
+                  onClick={() => go(selectedUnit ? "unit-detail" : "list")}
+                  className="px-4 py-2 border border-[#E4E7EE] rounded text-[11px] text-[#666] cursor-pointer hover:bg-[#F5F6FA]"
+                >
+                  Cancel
+                </button>
+                <BtnFill label="Continue" />
+              </div>
+            </div>
+          ) : (
+            /* Manual Entry */
+            <div>
+              <p className="text-[11px] text-[#666] mb-4">
+                Enter a temperature and press the Record button below to save the temperature.
+              </p>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <input
+                  type="text"
+                  value={tempInput}
+                  onChange={(e) => setTempInput(e.target.value)}
+                  placeholder="0"
+                  className="w-[80px] h-[50px] border border-[#E4E7EE] rounded-lg text-center text-[24px] font-bold text-[#333] outline-none focus:border-[#4A5FC1]"
+                />
+                <span className="text-[18px] text-[#666]">°C</span>
+                <button
+                  onClick={() => {
+                    const val = parseFloat(tempInput);
+                    if (isNaN(val)) return;
+                    // Check if out of range → go to warning, else go to PIN
+                    if (selectedUnit && isOutOfRange(val, selectedUnit.safeMin, selectedUnit.safeMax)) {
+                      go("temp-warning");
+                    } else {
+                      go("pin-auth");
+                    }
+                  }}
+                  className="px-5 py-3 bg-[#4A5FC1] text-white text-[13px] font-semibold rounded-lg cursor-pointer hover:opacity-90"
+                >
+                  Record
+                </button>
+              </div>
+              <button
+                onClick={() => go(selectedUnit ? "unit-detail" : "list")}
+                className="block mx-auto text-[11px] text-[#E74C3C] cursor-pointer hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── PIN AUTH VIEW ─── */
+  if (view === "pin-auth") {
+    const handlePinDigit = (digit: string) => {
+      const next = [...pinDigits];
+      const idx = next.findIndex((d) => d === "");
+      if (idx !== -1) {
+        next[idx] = digit;
+        setPinDigits(next);
+        // If all filled, proceed
+        if (idx === 3) {
+          setTimeout(() => {
+            setPinDigits(["", "", "", ""]);
+            go(selectedUnit ? "unit-detail" : "list");
+          }, 500);
+        }
+      }
+    };
+    const handlePinBackspace = () => {
+      const next = [...pinDigits];
+      const lastFilled = next.map((d, i) => (d !== "" ? i : -1)).filter((i) => i !== -1);
+      if (lastFilled.length > 0) {
+        next[lastFilled[lastFilled.length - 1]] = "";
+        setPinDigits(next);
+      }
+    };
+
+    return (
+      <div className="p-5 flex items-center justify-center min-h-[500px]">
+        <div className="w-[280px] bg-white rounded-lg border border-[#E4E7EE] p-6">
+          <h2 className="text-[14px] font-bold text-[#333] text-center mb-5">Authentication Required</h2>
+
+          {/* PIN dots */}
+          <div className="flex justify-center gap-3 mb-6">
+            {pinDigits.map((d, i) => (
+              <div
+                key={i}
+                className={`w-10 h-10 border-2 rounded-lg flex items-center justify-center text-[18px] font-bold ${
+                  d ? "border-[#4A5FC1] text-[#4A5FC1]" : "border-[#E4E7EE]"
+                }`}
+              >
+                {d ? "•" : ""}
+              </div>
+            ))}
+          </div>
+
+          {/* Number pad */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+              <button
+                key={n}
+                onClick={() => handlePinDigit(String(n))}
+                className="h-[44px] bg-white border border-[#E4E7EE] rounded-lg text-[16px] font-semibold text-[#333] cursor-pointer hover:bg-[#F5F6FA]"
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              onClick={handlePinBackspace}
+              className="h-[44px] bg-[#E74C3C] rounded-lg text-[14px] text-white cursor-pointer hover:opacity-90"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => handlePinDigit("0")}
+              className="h-[44px] bg-white border border-[#E4E7EE] rounded-lg text-[16px] font-semibold text-[#333] cursor-pointer hover:bg-[#F5F6FA]"
+            >
+              0
+            </button>
+            <div />
+          </div>
+
+          <button
+            onClick={() => {
+              setPinDigits(["", "", "", ""]);
+              go("add-record");
+            }}
+            className="block mx-auto text-[11px] text-[#E74C3C] cursor-pointer hover:underline"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── TEMPERATURE WARNING VIEW ─── */
+  if (view === "temp-warning") {
+    return (
+      <div className="p-5 flex items-center justify-center min-h-[500px]">
+        <div className="w-[340px] bg-white rounded-lg border border-[#E4E7EE] p-6">
+          <h2 className="text-[16px] font-bold text-[#E74C3C] text-center mb-1">Temperature Warning</h2>
+          <p className="text-[11px] text-[#999] text-center mb-5">The entered temperature is at an unsafe level.</p>
+
+          <p className="text-[12px] font-semibold text-[#333] mb-3">Please provide a corrective action.</p>
+
+          {/* Dropdown */}
+          <div className="relative mb-5">
+            <button
+              onClick={() => setShowActionDropdown(!showActionDropdown)}
+              className="w-full px-3 py-2.5 border border-[#E4E7EE] rounded-lg text-left text-[11px] cursor-pointer hover:border-[#4A5FC1] flex items-center justify-between"
+            >
+              <span className={selectedAction ? "text-[#333]" : "text-[#999]"}>
+                {selectedAction || "Select an item..."}
+              </span>
+              <span className="text-[#999]">{showActionDropdown ? "∧" : "∨"}</span>
+            </button>
+            {showActionDropdown && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-[#E4E7EE] rounded-lg mt-1 shadow-lg z-10">
+                {correctiveActions.map((a) => (
+                  <button
+                    key={a}
+                    onClick={() => {
+                      setSelectedAction(a);
+                      setShowActionDropdown(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 text-[11px] text-[#333] hover:bg-[#F5F6FA] cursor-pointer"
+                  >
+                    {a}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-        ))}
-      </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[#E4E7EE]">
-        <div className="flex items-center gap-1.5 text-[11px] text-[#666]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#27AE60]" /> All checks passed
-        </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-[#666]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#E74C3C]" /> Issues detected
-        </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-[#666]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#E4E7EE]" /> No data
-        </div>
-      </div>
-    </div>
-  );
-}
+          <BtnFill
+            label="Submit"
+            onClick={() => {
+              setSelectedAction("");
+              setShowActionDropdown(false);
+              go("pin-auth");
+            }}
+          />
 
-/* ─── Records View ─── */
-function RecordsView() {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border border-[#E4E7EE]">
-      <div className="px-4 py-3 border-b border-[#E4E7EE] flex items-center justify-between">
-        <h3 className="text-[13px] font-semibold text-[#333]">Temperature Records</h3>
-        <button className="text-[11px] px-3 py-1.5 rounded border border-[#E4E7EE] text-[#666] hover:bg-[#F5F6FA] cursor-pointer transition-colors">
-          Export CSV
-        </button>
+          <button
+            onClick={() => {
+              setSelectedAction("");
+              setShowActionDropdown(false);
+              go("add-record");
+            }}
+            className="block mx-auto mt-3 text-[11px] text-[#E74C3C] cursor-pointer hover:underline"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
-      <table className="w-full text-[11px]">
-        <thead>
-          <tr className="border-b border-[#E4E7EE] text-[#666]">
-            <th className="text-left px-3 py-2 font-medium">Date/Time</th>
-            <th className="text-left px-3 py-2 font-medium">Unit</th>
-            <th className="text-left px-3 py-2 font-medium">Temperature</th>
-            <th className="text-left px-3 py-2 font-medium">Method</th>
-            <th className="text-left px-3 py-2 font-medium">Result</th>
-            <th className="text-left px-3 py-2 font-medium">User</th>
-            <th className="text-left px-3 py-2 font-medium">Corrective Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {recordsData.map((row, i) => (
-            <tr key={i} className={`border-b border-[#F0F0F0] ${i % 2 === 1 ? "bg-[#F9FAFB]" : ""}`}>
-              <td className="px-3 py-2 text-[#666]">{row.dateTime}</td>
-              <td className="px-3 py-2 font-medium text-[#333]">{row.unit}</td>
-              <td className="px-3 py-2 font-medium text-[#333]">{row.temp}</td>
-              <td className="px-3 py-2 text-[#666]">{row.method}</td>
-              <td className="px-3 py-2">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  row.result === "Pass"
-                    ? "bg-[#E8F8F0] text-[#27AE60]"
-                    : "bg-[#FDE8E8] text-[#E74C3C]"
-                }`}>
-                  {row.result}
-                </span>
-              </td>
-              <td className="px-3 py-2 text-[#666]">{row.user}</td>
-              <td className="px-3 py-2 text-[#666]">{row.corrective}</td>
-            </tr>
+    );
+  }
+
+  /* ─── ALERTS VIEW ─── */
+  if (view === "alerts") {
+    return (
+      <div className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <h2 className="text-[16px] font-bold text-[#4A5FC1]">Alerts</h2>
+            <span className="w-5 h-5 rounded-full bg-[#E74C3C] text-white text-[10px] font-bold flex items-center justify-center">
+              {alertsData.length}
+            </span>
+          </div>
+          <button
+            onClick={() => go("list")}
+            className="text-[11px] text-[#4A5FC1] cursor-pointer hover:underline"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {alertsData.map((a, i) => (
+            <div key={i} className="flex items-start gap-3 p-3 bg-white border border-[#E4E7EE] rounded-lg">
+              <div className="flex-1">
+                <div className="text-[9px] font-bold text-[#E74C3C] uppercase tracking-wider mb-0.5">
+                  {a.type}:
+                </div>
+                <div className="text-[11px] font-medium text-[#333]">
+                  {a.unit} &ndash; {a.msg}
+                </div>
+              </div>
+              <div className="text-[9px] text-[#999] shrink-0">{a.time}</div>
+              <button className="w-5 h-5 rounded-full border border-[#E4E7EE] flex items-center justify-center text-[10px] text-[#999] cursor-pointer hover:bg-[#FDE8E8] hover:text-[#E74C3C] shrink-0">
+                ✕
+              </button>
+            </div>
           ))}
-        </tbody>
-      </table>
-    </div>
-  );
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback
+  return <div className="p-5 text-[12px] text-[#999]">No view selected.</div>;
 }
 
 /* ─── Docs ─── */
-export function Docs() {
+export function Docs({ currentStep }: { currentStep?: number }) {
+  const step = currentStep ?? 1;
+
   return (
     <>
       <div className="mb-6">
         <span className="text-[10px] font-bold tracking-[1.5px] uppercase text-[#2E75B6]">Documentation</span>
         <h2 className="text-[22px] font-bold text-[#333] mt-1">Temperatures</h2>
-        <p className="text-[13px] text-[#666] mt-2 leading-relaxed">
-          The Temperatures module provides real-time monitoring, scheduled checks, and manual recording of temperature data across all refrigeration, freezer, and hot-holding units. It is the most compliance-critical module in Hospitality Safe.
-        </p>
       </div>
 
-      <DocSection title="Recording Methods">
-        <p>Temperatures can be recorded via three methods:</p>
-        <ul className="list-disc pl-4 space-y-2 mt-2">
-          <li>
-            <strong>Auto Sensor (\uD83D\uDCE1):</strong> IoT sensors installed inside fridges, freezers, and coolrooms transmit readings every 15 minutes via a gateway device. No staff action required. If a reading is out of the safe range, the system generates an alert immediately. Sensors are battery-powered and last approximately 2 years.
-          </li>
-          <li>
-            <strong>Bluetooth Thermometer (\uD83D\uDCF1):</strong> Staff pair a wireless probe thermometer via Bluetooth. To take a reading: insert probe, wait for stable reading (the display shows a stabilizing animation), then tap &quot;Record.&quot; The temperature is captured with the unit, timestamp, and staff PIN. There can be a 30&ndash;60 second delay for Bluetooth sync.
-          </li>
-          <li>
-            <strong>Manual Entry (\u270F\uFE0F):</strong> Staff type the temperature manually using the on-screen keypad. This is a fallback method enabled per-unit in Settings. Manual entry requires the staff member to visually read a thermometer and type the value. It is the least reliable method and is flagged in reports.
-          </li>
-        </ul>
-      </DocSection>
+      {step === 1 && (
+        <>
+          <DocSection title="What is this?">
+            <p>The main Temperature Records list shows every temperature unit configured for the business. Each row displays the unit name, today&apos;s MIN / AVG / MAX readings, a status indicator, a countdown timer, and an Add button.</p>
+          </DocSection>
 
-      <DocSection title="Auto Monitoring Details">
-        <p>For units with auto sensors:</p>
-        <ul className="list-disc pl-4 space-y-1 mt-1">
-          <li>Readings arrive every 15 minutes (configurable: 5, 10, 15, 30 min)</li>
-          <li>If a reading is outside the safe range, an alert is generated within 1 minute</li>
-          <li>Alerts are pushed to the app, email, and SMS (configurable)</li>
-          <li>If the sensor loses connection for more than 30 minutes, a &quot;sensor disconnected&quot; alert is triggered</li>
-          <li>Data is stored for 7 years for compliance auditing</li>
-        </ul>
-      </DocSection>
+          <DocSection title="Status Indicator Colors">
+            <ul className="list-disc pl-4 space-y-1 mt-1">
+              <li><span className="inline-block w-2.5 h-2.5 rounded-sm bg-[#E74C3C] align-middle mr-1" /> <strong>Red:</strong> Temperature is within an unsafe range</li>
+              <li><span className="inline-block w-2.5 h-2.5 rounded-sm bg-[#F39C12] align-middle mr-1" /> <strong>Orange:</strong> Temperature has fluctuations &mdash; in and out of range</li>
+              <li><span className="inline-block w-2.5 h-2.5 rounded-sm bg-[#27AE60] align-middle mr-1" /> <strong>Green:</strong> All temperatures are within safe range and completed within required timeframes</li>
+              <li><span className="inline-block w-2.5 h-2.5 rounded-sm bg-[#CCC] align-middle mr-1" /> <strong>Grey:</strong> No temperature records taken</li>
+            </ul>
+          </DocSection>
 
-      <DocSection title="Scheduling">
-        <p>Temperature check schedules are configured per unit, per day of the week:</p>
-        <ul className="list-disc pl-4 space-y-1 mt-1">
-          <li>Each unit can have multiple scheduled checks per day (e.g. morning, afternoon, evening)</li>
-          <li>Schedules can vary by day (e.g. fewer checks on weekends)</li>
-          <li>Closed days can be marked &mdash; no checks are expected</li>
-          <li>Overdue checks appear in the dashboard as red items</li>
-          <li>The system tracks compliance percentage: completed checks vs. scheduled checks</li>
-        </ul>
-        <p className="mt-2">Schedules are configured by Managers in Settings &rarr; Temperature &rarr; Schedules.</p>
-      </DocSection>
+          <DocSection title="Timer / Countdown">
+            <p>The &quot;0.00h&quot; value is a countdown for when the next temperature record is due. Once temperature check times are configured in Settings, temperatures should be taken within that window. The system automatically grabs data logger temperatures at these times, or the user records manually via Bluetooth or manual entry.</p>
+          </DocSection>
 
-      <DocSection title="Corrective Action Workflow">
-        <p>When a temperature reading is out of range (either from a sensor alert or a manual/Bluetooth reading), the system requires a corrective action:</p>
-        <ol className="list-decimal pl-4 space-y-1 mt-1">
-          <li><strong>Select action type</strong> from a dropdown: &quot;Adjusted thermostat,&quot; &quot;Moved food to another unit,&quot; &quot;Discarded food,&quot; &quot;Called technician,&quot; &quot;Defrosted/cleaned unit,&quot; or &quot;Other&quot;</li>
-          <li><strong>Add notes</strong> describing what was done (free text)</li>
-          <li><strong>Optionally create a Task</strong> for follow-up (e.g. &quot;Check Freezer 2 in 1 hour&quot;). This creates a task in the Task Manager module.</li>
-          <li><strong>Optionally record waste</strong> if food was discarded, linking to the waste/inventory system</li>
-          <li><strong>Re-check temperature</strong> after corrective action to confirm it&apos;s back in range</li>
-        </ol>
-        <p className="mt-2">All corrective actions are logged and visible in the Records view and in Audit reports.</p>
-      </DocSection>
+          <DocSection title="Area Filtering">
+            <p>When an area is selected at the top, only temperature units linked to that area will show.</p>
+          </DocSection>
 
-      <DocSection title="Calendar View">
-        <p>The Calendar view provides a monthly overview of temperature compliance:</p>
-        <ul className="list-disc pl-4 space-y-1 mt-1">
-          <li><span className="inline-block w-2.5 h-2.5 rounded-full bg-[#27AE60] align-middle mr-1" /> <strong>Green dot:</strong> All scheduled checks completed and within range</li>
-          <li><span className="inline-block w-2.5 h-2.5 rounded-full bg-[#E74C3C] align-middle mr-1" /> <strong>Red dot:</strong> One or more out-of-range readings or missed checks</li>
-          <li><strong>No dot:</strong> No data recorded (could be a closed day or future date)</li>
-        </ul>
-        <p className="mt-2">Clicking a day opens the detailed records for that date.</p>
-      </DocSection>
+          <DocNote type="info">
+            <strong>[Figma: blue]</strong> Is it necessary to have icons next to the unit names?
+          </DocNote>
 
-      <DocSection title="User Roles">
-        <RoleTable roles={[
-          ["Staff", "Record manual/Bluetooth temps, view own readings, complete corrective actions"],
-          ["Team Leader", "View all readings for their area, acknowledge alerts, view reports"],
-          ["Manager", "Configure schedules, safe ranges, units, alert thresholds. View all records, export data, sign off corrective actions"],
-          ["Superuser", "All above across locations. Configure sensor gateways, manage IoT devices"],
-        ]} />
-      </DocSection>
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> The temperature readings need to be centred more in the middle. These readings that appear are hourly readings pushed through the app. Should we show the min, max and average or just the average to make the page easier on the eye? If we click onto the unit, maybe there is where we get more detailed temperature information like min, max.
+          </DocNote>
 
-      <DocNote type="warning">
-        <strong>Known Issues:</strong>
-        <ul className="list-disc pl-4 space-y-1 mt-1">
-          <li><strong>Hot Display 66\u00B0C showing green:</strong> The current safe range for hot holding is set to 60&ndash;100\u00B0C, which means 66\u00B0C is technically &quot;in range.&quot; However, Australian food safety guidelines recommend &ge;63\u00B0C for hot holding. The default range configuration needs review &mdash; some businesses may want a tighter threshold (e.g. 63&ndash;100\u00B0C).</li>
-          <li><strong>Cooling temperature false warnings:</strong> During the cooling process (e.g. cooked food cooling from 60\u00B0C to 21\u00B0C within 2 hours), the system may generate false out-of-range alerts for fridge units. The Processes module handles cooling workflows separately, but the temperature module does not yet suppress alerts during active cooling processes.</li>
-          <li><strong>Bluetooth delay:</strong> Bluetooth thermometer readings can take 30&ndash;60 seconds to stabilize and sync. Staff sometimes tap &quot;Record&quot; before the reading stabilizes, capturing an inaccurate temperature. A &quot;waiting for stable reading&quot; indicator is shown, but it&apos;s not always clear enough.</li>
-        </ul>
-      </DocNote>
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> For data loggers, they should take 2x readings daily as a record. Fix this in setting requirements.
+          </DocNote>
+        </>
+      )}
 
-      <DocNote type="info">
-        Temperature data is the most frequently audited data in food safety inspections. Ensure auto sensors are calibrated annually and that manual checks are performed as scheduled, even when auto sensors are installed (some councils require both).
-      </DocNote>
+      {step === 2 && (
+        <>
+          <DocSection title="What is this?">
+            <p>The unit detail screen shows hourly temperature records for a specific unit. Each record card shows the Min, Avg, and Max temperature for that hour, the time range, and the recording type (Sensor, Manual, Bluetooth).</p>
+          </DocSection>
+
+          <DocSection title="Calendar">
+            <p>Below the records is a monthly calendar showing daily compliance status. Red squares indicate days with issues (out-of-range readings or missed checks). Green squares indicate all checks passed.</p>
+          </DocSection>
+
+          <DocSection title="Corrective Actions">
+            <p>When a unit has out-of-range readings, each record card shows a &quot;Corrective Action&quot; link. Tapping it lets the user record what action was taken. An &quot;Add Corrective Action&quot; button also appears at the top.</p>
+          </DocSection>
+
+          <DocNote type="info">
+            <strong>[Figma: blue]</strong> Every hour temperatures should be coming through to the app as records. A temperature record is due at 10:00am, however, there are no checks coming through.
+          </DocNote>
+
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> When there is an out of temperature reading with data loggers, there needs to be the ability to record the corrective action for the unit. We need to know how long the unit is out of temperature for so the business knows what action to take regarding the food.
+          </DocNote>
+
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> I&apos;m not sure what is determining if the daily temperature record indicator turns red. Need to establish this as there are temperatures taken within these red dot days and the temperatures are good but it looks like they are not.
+          </DocNote>
+
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> When I press Prev Month the calendar shows with no information &mdash; it is blank. If I press previous to November and then next Month back to December the data shows.
+          </DocNote>
+        </>
+      )}
+
+      {step === 3 && (
+        <>
+          <DocSection title="What is this?">
+            <p>The Record Temperature screen lets users add a temperature reading for a unit. There are two entry methods: Device Entry (Bluetooth thermometer) and Manual Entry (type the value).</p>
+          </DocSection>
+
+          <DocSection title="Device Entry (Bluetooth)">
+            <p>Staff pair a wireless probe thermometer via Bluetooth. The system scans for nearby devices. Once connected, insert the probe, wait for a stable reading, then tap Record.</p>
+          </DocSection>
+
+          <DocSection title="Manual Entry">
+            <p>Staff type the temperature using the on-screen input. Negative values are supported (for freezers). After pressing Record, the system checks if the temperature is in the safe range. If not, it shows a Temperature Warning.</p>
+          </DocSection>
+
+          <DocNote type="info">
+            <strong>[Figma: blue]</strong> The user can add unit temperature records manually or through Bluetooth thermometers to verify temperatures or as their main way of taking temperatures if they do not have data loggers in use.
+          </DocNote>
+
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> During testing, there was a 30&ndash;60 second delay for it to then show on the record page. Can we look into this and make it an instant update onto the record sheet.
+          </DocNote>
+        </>
+      )}
+
+      {step === 4 && (
+        <>
+          <DocSection title="What is this?">
+            <p>After recording a temperature (or submitting a corrective action), the user must authenticate with their 4-digit PIN. This links the record to the specific staff member.</p>
+          </DocSection>
+
+          <DocSection title="How it works">
+            <p>Enter 4 digits using the number pad. The red backspace button clears the last digit. Once all 4 digits are entered, the system validates the PIN and saves the record.</p>
+          </DocSection>
+        </>
+      )}
+
+      {step === 5 && (
+        <>
+          <DocSection title="What is this?">
+            <p>The Temperature Warning screen appears when an out-of-range temperature is entered. The user must select a corrective action from the dropdown before proceeding.</p>
+          </DocSection>
+
+          <DocSection title="Corrective Action Options">
+            <ul className="list-disc pl-4 space-y-1 mt-1">
+              <li>Maintenance Issue</li>
+              <li>Busy service period</li>
+              <li>Defrost Cycle</li>
+              <li>Other: Specify (free text)</li>
+            </ul>
+          </DocSection>
+
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> If a user enters a temperature and the temperature warning screen shows, if the user just cancels it, the temperature is still recorded. So if it is a mistake and the user cancels it, it still saves that reading.
+          </DocNote>
+
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> When the corrective action is submitted, the screen does not close. The blue button turns lighter and then comes back dark blue. The pop up page should close and return back to the original page. To get off the page you need to press Cancel underneath the submit button. The record does save.
+          </DocNote>
+        </>
+      )}
+
+      {step === 6 && (
+        <>
+          <DocSection title="What is this?">
+            <p>The Alerts panel shows sensor alerts when units go out of temperature range. Each alert shows the unit name, alert type, and timestamp. Alerts can be dismissed with the X button.</p>
+          </DocSection>
+
+          <DocSection title="Alert Behavior">
+            <p>Out-of-range temperatures from data loggers or manual entry show in the alert panel and send push notifications. There needs to be the option to monitor the temperature or close the alert. If a corrective action has been submitted with the temperature, that alert should be closed and no further action is required.</p>
+          </DocSection>
+
+          <DocNote type="warning">
+            <strong>[Figma: red]</strong> When an out of range temperature is taken from manual entry and the user has selected the corrective action, the out of range temperature shows in the alert panel and is sending push notifications. The alerts showing should be more data logger out of temperature reading alerts, or manual entries.
+          </DocNote>
+        </>
+      )}
     </>
   );
 }

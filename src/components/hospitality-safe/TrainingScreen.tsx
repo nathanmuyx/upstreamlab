@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DocSection, DocNote, RoleTable } from "@/app/projects/hospitality-safe/page";
+import { DocSection, DocNote, RoleTable } from "@/lib/hospitality-safe-docs";
 
 /* ─── types ─── */
 type FilterTab = "all" | "onboarding" | "food-safety" | "custom";

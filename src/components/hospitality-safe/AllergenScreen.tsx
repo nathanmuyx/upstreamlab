@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DocSection, DocNote, RoleTable } from "@/app/projects/hospitality-safe/page";
+import { DocSection, DocNote, RoleTable } from "@/lib/hospitality-safe-docs";
 
 /* ─── types ─── */
 const allergens = ["Dairy", "Gluten", "Eggs", "Fish", "Nuts", "Shellfish", "Soy", "Sesame", "Lupin"] as const;

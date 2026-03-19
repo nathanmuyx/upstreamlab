@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DocSection, DocNote } from "@/app/projects/hospitality-safe/page";
+import { DocSection, DocNote } from "@/lib/hospitality-safe-docs";
 
 /* ─── data ─── */
 const userData = [
