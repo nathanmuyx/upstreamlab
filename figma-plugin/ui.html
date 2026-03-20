@@ -1,0 +1,98 @@
+<html>
+<head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; padding: 16px; background: #fff; }
+  h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; color: #0F172A; }
+  p { font-size: 11px; color: #64748B; margin-bottom: 12px; line-height: 1.4; }
+  input {
+    width: 100%; padding: 8px 10px; border: 1px solid #E2E8F0; border-radius: 6px;
+    font-size: 12px; outline: none; margin-bottom: 8px;
+  }
+  input:focus { border-color: #31AD52; box-shadow: 0 0 0 2px rgba(49,173,82,0.15); }
+  button {
+    width: 100%; padding: 8px; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; background: #31AD52; color: white;
+  }
+  button:hover { background: #28964A; }
+  button:disabled { background: #CBD5E1; cursor: not-allowed; }
+  #status { margin-top: 8px; font-size: 11px; color: #64748B; }
+  .error { color: #EF4444; }
+</style>
+</head>
+<body>
+  <h3>upstream<span style="color:#31AD52">lab</span> Import</h3>
+  <p>Paste a frame URL from upstream-lab. The frame will be created as auto-layout Figma frames.</p>
+
+  <input id="url" type="text" placeholder="http://localhost:3000/projects/author-studio/docs?node-id=1-1" />
+  <button id="import" onclick="doImport()">Import Frame</button>
+  <div id="status"></div>
+
+  <script>
+    function doImport() {
+      const url = document.getElementById('url').value.trim();
+      const status = document.getElementById('status');
+      const btn = document.getElementById('import');
+
+      // Parse the URL to extract project slug and node ID
+      // Supports: /projects/:slug/docs?node-id=:id  or  /api/frames/:slug/:id
+      let projectSlug, nodeId;
+      try {
+        const u = new URL(url);
+        const pathMatch = u.pathname.match(/\/projects\/([^/]+)/);
+        const nodeParam = u.searchParams.get('node-id');
+        if (pathMatch && nodeParam) {
+          projectSlug = pathMatch[1];
+          nodeId = nodeParam;
+        } else {
+          const apiMatch = u.pathname.match(/\/api\/frames\/([^/]+)\/([^/]+)/);
+          if (apiMatch) {
+            projectSlug = apiMatch[1];
+            nodeId = apiMatch[2];
+          }
+        }
+        if (!projectSlug || !nodeId) throw new Error('bad url');
+      } catch {
+        status.textContent = 'Invalid URL. Use a frame link from upstream-lab docs.';
+        status.className = 'error';
+        return;
+      }
+
+      btn.disabled = true;
+      status.textContent = 'Fetching frame data...';
+      status.className = '';
+
+      const origin = new URL(url).origin;
+      const apiUrl = `${origin}/api/frames/${projectSlug}/${nodeId}`;
+
+      fetch(apiUrl)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        })
+        .then(data => {
+          status.textContent = 'Creating Figma frames...';
+          parent.postMessage({ pluginMessage: { type: 'create-frame', layout: data.layout, frameName: data.frame.name } }, '*');
+        })
+        .catch(err => {
+          status.textContent = `Error: ${err.message}. Is upstream-lab dev server running?`;
+          status.className = 'error';
+          btn.disabled = false;
+        });
+    }
+
+    window.onmessage = (e) => {
+      const msg = e.data.pluginMessage;
+      if (msg.type === 'done') {
+        document.getElementById('status').textContent = `Created "${msg.name}" with auto-layout frames!`;
+        document.getElementById('import').disabled = false;
+      }
+      if (msg.type === 'error') {
+        document.getElementById('status').textContent = msg.message;
+        document.getElementById('status').className = 'error';
+        document.getElementById('import').disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

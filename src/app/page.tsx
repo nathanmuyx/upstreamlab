@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 const projects = [
   {
     slug: "author-studio",
-    title: "Author Studio",
+    title: "Dictation",
     client: "Maloney Anderson Legal",
     description: "Dictation platform with recording, trimming, and replace-from-cursor workflows.",
     variants: ["Mild", "Medium", "Spicy"],
@@ -16,6 +16,17 @@ const projects = [
     statusColor: "#F59E0B",
     tags: ["Web App", "Audio", "React"],
     frameCount: 8,
+  },
+  {
+    slug: "hospitality-safe",
+    title: "Hospitality Safe",
+    client: "Hospitality Safe",
+    description: "Food safety management platform for hospitality businesses. Temperature monitoring, timers, checklists, audits, and compliance.",
+    variants: [],
+    status: "Documentation",
+    statusColor: "#2E75B6",
+    tags: ["Web App", "Food Safety", "React"],
+    frameCount: 14,
   },
 ];
 
@@ -117,7 +128,7 @@ export default function HomePage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/projects/${project.slug}/docs`);
+                      router.push(`/projects/${project.slug}${project.slug === "author-studio" ? "/docs" : ""}`);
                     }}
                     className="px-3 py-1.5 rounded-md text-[11px] font-semibold bg-[#31AD52]/10 text-[#31AD52] hover:bg-[#31AD52]/20 border-none transition-all flex items-center gap-1.5 cursor-pointer"
                   >
@@ -125,7 +136,7 @@ export default function HomePage() {
                       <rect x="3" y="3" width="18" height="18" rx="2" />
                       <path d="M3 9h18M9 21V9" />
                     </svg>
-                    {project.frameCount} Frames
+                    {project.frameCount} {project.variants.length > 0 ? "Frames" : "Screens"}
                   </button>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="m9 18 6-6-6-6" />

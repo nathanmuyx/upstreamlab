@@ -53,7 +53,7 @@ function DocsContent() {
         {/* Top bar */}
         <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#1A1A28] shrink-0 bg-[#0A0A12]/95 backdrop-blur-[12px]">
           <div className="flex items-center gap-3">
-            <Link href="/projects/author-studio" className="flex items-center gap-2 no-underline">
+            <Link href="/" className="flex items-center gap-2 no-underline">
               <svg viewBox="0 0 608.44 669.96" fill="none" width={18} height={20}>
                 <path d="M405.72,366.23c0,28.07-11.42,53.33-29.76,71.67-18.34,18.48-43.73,29.77-71.67,29.77-56,0-101.43-45.42-101.43-101.43v-51.35L0,197.22v168.44c0,168.16,136.28,304.29,304.29,304.29s304.15-136.14,304.15-304.29V117.52L405.72,0v366.23Z" fill="url(#upD)" />
                 <polygon points="405.72 197.22 202.86 314.88 202.86 79.57 405.72 197.22" fill="#31AD52" />
@@ -77,6 +77,15 @@ function DocsContent() {
           <div className="flex items-center gap-3">
             <Link
               href="/projects/author-studio"
+              className="text-[11px] text-slate-500 hover:text-slate-300 no-underline flex items-center gap-1"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Project
+            </Link>
+            <Link
+              href="/projects/author-studio/prototype"
               className="text-[11px] text-slate-500 hover:text-slate-300 no-underline flex items-center gap-1"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
