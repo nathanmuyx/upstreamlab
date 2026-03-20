@@ -112,7 +112,7 @@ export default function NewDesignPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => go("temp-list")}
-            className="flex items-center gap-2 px-3 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-colors cursor-pointer"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
@@ -136,7 +136,7 @@ export default function NewDesignPage() {
             <button
               key={a.label}
               onClick={a.action}
-              className="flex-1 flex flex-col items-center py-3 rounded-xl bg-white border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer"
+              className="flex-1 flex flex-col items-center py-3 rounded-md bg-white border border-gray-100 text-gray-500 hover:text-gray-900 hover:border-gray-300 hover: transition-all cursor-pointer"
             >
               {a.icon}
               <span className="mt-1 text-[10px] font-medium">{a.label}</span>
@@ -155,18 +155,21 @@ export default function NewDesignPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { name: "Rebelled Dough", time: "02:15", sub: "Hrs Remaining", progress: 56, by: "Vicki · 9:45" },
-                { name: "Chicken Broth", time: "00:12", sub: "Mins Remaining", progress: 10, by: "Adele · 8:30" },
-                { name: "Rice", time: "00:00", sub: "Expired", progress: 100, by: "Vicki · 7:00" },
-                { name: "Salmon", time: "03:46", sub: "Paused", progress: 94, by: "— · 9:15" },
+                { name: "Rebelled Dough", time: "02:15", sub: "Hrs Remaining", progress: 56, by: "Vicki · 9:45", state: "running" as const },
+                { name: "Chicken Broth", time: "00:12", sub: "Mins Remaining", progress: 10, by: "Adele · 8:30", state: "low" as const },
+                { name: "Rice", time: "00:00", sub: "Expired", progress: 100, by: "Vicki · 7:00", state: "expired" as const },
+                { name: "Salmon", time: "03:46", sub: "Paused", progress: 94, by: "— · 9:15", state: "paused" as const },
               ].map((t) => {
                 const TICKS = 60;
                 const filledTicks = Math.round((t.progress / 100) * TICKS);
+                const tickColor = t.state === "expired" ? "#F59E0B" : t.state === "low" ? "#F59E0B" : t.state === "paused" ? "#9CA3AF" : "#2E75B6";
+                const textColor = t.state === "expired" ? "text-amber-500" : t.state === "low" ? "text-amber-500" : t.state === "paused" ? "text-gray-400" : "text-gray-900";
+                const subColor = t.state === "expired" ? "text-amber-400" : t.state === "low" ? "text-amber-400" : "text-gray-400";
                 return (
                   <button
                     key={t.name}
                     onClick={() => go("timer-detail")}
-                    className="flex flex-col items-center p-3 rounded-2xl bg-white hover:shadow-lg transition-all cursor-pointer"
+                    className="flex flex-col items-center p-3 rounded-md bg-white hover:bg-gray-50 transition-all cursor-pointer"
                   >
                     {/* Analog tick-mark circle */}
                     <div className="relative w-[110px] h-[110px]">
@@ -185,7 +188,7 @@ export default function NewDesignPage() {
                               y1={60 + Math.sin(rad) * inner}
                               x2={60 + Math.cos(rad) * outer}
                               y2={60 + Math.sin(rad) * outer}
-                              stroke={isFilled ? "#374151" : "#e5e7eb"}
+                              stroke={isFilled ? tickColor : "#e5e7eb"}
                               strokeWidth={isLong ? 2 : 1.2}
                               strokeLinecap="round"
                             />
@@ -193,8 +196,8 @@ export default function NewDesignPage() {
                         })}
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-[20px] font-semibold tabular-nums tracking-tight text-gray-900">{t.time}</span>
-                        <span className="text-[8px] text-gray-400 mt-0.5">{t.sub}</span>
+                        <span className={`text-[20px] font-semibold tabular-nums tracking-tight ${textColor}`}>{t.time}</span>
+                        <span className={`text-[8px] mt-0.5 ${subColor}`}>{t.sub}</span>
                       </div>
                     </div>
                     <span className="text-[11px] font-medium text-gray-900 mt-1.5">{t.name}</span>
@@ -204,7 +207,7 @@ export default function NewDesignPage() {
               })}
             </div>
             {/* Cooling — inline with small tick ring */}
-            <button onClick={() => go("cool-process")} className="mt-3 w-full flex items-center gap-3 p-3 rounded-xl bg-white hover:shadow-md transition-all cursor-pointer">
+            <button onClick={() => go("cool-process")} className="mt-3 w-full flex items-center gap-3 p-3 rounded-md bg-white hover: transition-all cursor-pointer">
               <div className="relative w-[40px] h-[40px] flex-shrink-0">
                 <svg className="w-full h-full" viewBox="0 0 50 50">
                   {Array.from({ length: 30 }).map((_, i) => {
@@ -213,7 +216,7 @@ export default function NewDesignPage() {
                     const filled = i < 23;
                     return (
                       <line key={i} x1={25 + Math.cos(rad) * 18} y1={25 + Math.sin(rad) * 18} x2={25 + Math.cos(rad) * 22} y2={25 + Math.sin(rad) * 22}
-                        stroke={filled ? "#374151" : "#e5e7eb"} strokeWidth={1.5} strokeLinecap="round" />
+                        stroke={filled ? "#F59E0B" : "#e5e7eb"} strokeWidth={1.5} strokeLinecap="round" />
                     );
                   })}
                 </svg>
@@ -234,7 +237,7 @@ export default function NewDesignPage() {
               <span className="text-[13px] font-semibold text-gray-900">Temperature Units</span>
               <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-gray-100 text-red-500">1 alert</span>
             </div>
-            <Card className="py-0 overflow-hidden rounded-xl">
+            <Card className="py-0 overflow-hidden rounded-md">
               <CardContent className="p-0">
                 {[
                   { name: "Grill U/B Fridge", temp: "8.1°C", note: "Alert!", indicatorClass: "bg-red-400", isAlert: true, noteClass: "text-red-400" },
@@ -357,7 +360,7 @@ export default function NewDesignPage() {
               <button
                 key={cat}
                 onClick={() => setSelectedTimerCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors ${
+                className={`px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors ${
                   selectedTimerCategory === cat ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -371,7 +374,7 @@ export default function NewDesignPage() {
               <button
                 key={t.name}
                 onClick={() => go("timer-label")}
-                className="text-left px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-all text-[12px] font-medium text-gray-900"
+                className="text-left px-3 py-2.5 rounded-md hover:bg-gray-50 transition-all text-[12px] font-medium text-gray-900"
               >
                 {t.name}
                 <span className="text-gray-400 ml-1.5">· {t.duration}</span>
@@ -389,7 +392,7 @@ export default function NewDesignPage() {
           </div>
           <Button
             onClick={() => go("timer-label")}
-            className="mt-6 rounded-xl px-12 py-3 text-[14px] font-semibold"
+            className="mt-6 rounded-md px-12 py-3 text-[14px] font-semibold"
             disabled={timerHours === 0 && timerMins === 0}
           >
             Start Timer
@@ -409,7 +412,7 @@ export default function NewDesignPage() {
           <Button
             onClick={() => goPin(() => go("timer-detail"))}
             size="lg"
-            className="rounded-xl text-[13px] font-semibold"
+            className="rounded-md text-[13px] font-semibold"
           >
             Print Label
           </Button>
@@ -417,7 +420,7 @@ export default function NewDesignPage() {
             variant="outline"
             onClick={() => goPin(() => go("timer-detail"))}
             size="lg"
-            className="rounded-xl text-[13px] font-medium"
+            className="rounded-md text-[13px] font-medium"
           >
             No Label
           </Button>
@@ -425,7 +428,7 @@ export default function NewDesignPage() {
             variant="ghost"
             onClick={back}
             size="lg"
-            className="rounded-xl text-[13px] font-medium text-gray-400 hover:text-gray-600"
+            className="rounded-md text-[13px] font-medium text-gray-400 hover:text-gray-600"
           >
             Cancel
           </Button>
@@ -454,7 +457,7 @@ export default function NewDesignPage() {
             {/* Track */}
             <rect x="8" y="8" width="264" height="144" rx="40" fill="none" stroke="#1f2937" strokeWidth="12" />
             {/* Progress */}
-            <rect x="8" y="8" width="264" height="144" rx="40" fill="none" stroke="#10b981" strokeWidth="12" strokeLinecap="round"
+            <rect x="8" y="8" width="264" height="144" rx="40" fill="none" stroke="#2E75B6" strokeWidth="12" strokeLinecap="round"
               strokeDasharray="720" strokeDashoffset="317"
               className="transition-all duration-1000"
             />
@@ -477,26 +480,26 @@ export default function NewDesignPage() {
         <div className="flex flex-col gap-2 w-full max-w-[320px] mt-8">
           <Button
             variant="outline"
-            className="w-full rounded-xl py-3.5 text-[14px] font-semibold bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+            className="w-full rounded-md py-3.5 text-[14px] font-semibold bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
           >
             Pause Timer
           </Button>
           <div className="flex gap-2">
             <Button
               variant="outline"
-              className="flex-1 rounded-xl py-3 text-[12px] font-medium bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-700"
+              className="flex-1 rounded-md py-3 text-[12px] font-medium bg-gray-800/50 border-gray-700 text-gray-300 hover:bg-gray-700"
             >
               Print Label
             </Button>
             <Button
-              className="flex-1 rounded-xl py-3 text-[12px] font-medium bg-amber-600 hover:bg-amber-500 text-white"
+              className="flex-1 rounded-md py-3 text-[12px] font-medium bg-amber-600 hover:bg-amber-500 text-white"
             >
               Restart
             </Button>
           </div>
           <Button
             variant="destructive"
-            className="w-full rounded-xl py-3 text-[12px] font-semibold mt-2"
+            className="w-full rounded-md py-3 text-[12px] font-semibold mt-2"
             onClick={() => goPin(() => go("success-generic"))}
           >
             Finish Timer
@@ -529,7 +532,7 @@ export default function NewDesignPage() {
                   key={cat}
                   variant="ghost"
                   onClick={() => go("label-foods")}
-                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-2xl p-4 h-auto text-[14px] font-semibold"
+                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md p-4 h-auto text-[14px] font-semibold"
                 >
                   {cat}
                 </Button>
@@ -554,7 +557,7 @@ export default function NewDesignPage() {
               key={f}
               variant="outline"
               onClick={() => go("label-preview")}
-              className="rounded-2xl p-4 h-auto text-[14px] font-semibold text-gray-900 hover:bg-gray-50"
+              className="rounded-md p-4 h-auto text-[14px] font-semibold text-gray-900 hover:bg-gray-50"
             >
               {f}
             </Button>
@@ -591,8 +594,8 @@ export default function NewDesignPage() {
                   key={n}
                   variant={labelCount === n ? "default" : "outline"}
                   onClick={() => setLabelCount(n)}
-                  className={`w-14 h-14 rounded-xl font-bold text-[18px] ${
-                    labelCount === n ? "shadow-md" : "shadow-sm hover:shadow-md"
+                  className={`w-14 h-14 rounded-md font-bold text-[18px] ${
+                    labelCount === n ? "" : " hover:"
                   }`}
                 >
                   {n}
@@ -602,7 +605,7 @@ export default function NewDesignPage() {
           </div>
           <Button
             onClick={() => goPin(() => go("success-label"))}
-            className="rounded-xl text-[13px] font-semibold"
+            className="rounded-md text-[13px] font-semibold"
           >
             Print Labels
           </Button>
@@ -621,7 +624,7 @@ export default function NewDesignPage() {
       <p className="text-[14px] text-gray-400 mt-1.5">Buffalo Cheese · Prep Label · by Vicki</p>
       <Button
         onClick={() => { setHistory([]); setScreen("dashboard"); }}
-        className="mt-8 rounded-xl text-[13px] font-semibold"
+        className="mt-8 rounded-md text-[13px] font-semibold"
       >
         Back to Dashboard
       </Button>
@@ -673,7 +676,7 @@ export default function NewDesignPage() {
         <Button
           onClick={() => go("temp-manual")}
           size="lg"
-          className="w-72 rounded-xl text-[13px] font-semibold"
+          className="w-72 rounded-md text-[13px] font-semibold"
         >
           Bluetooth Thermometer
         </Button>
@@ -681,7 +684,7 @@ export default function NewDesignPage() {
           variant="outline"
           onClick={() => go("temp-manual")}
           size="lg"
-          className="w-72 rounded-xl text-[13px] font-medium"
+          className="w-72 rounded-md text-[13px] font-medium"
         >
           Manual Entry
         </Button>
@@ -717,7 +720,7 @@ export default function NewDesignPage() {
                 key={k}
                 variant={k === "back" ? "ghost" : "outline"}
                 onClick={() => handleKey(k)}
-                className="h-[56px] rounded-xl text-[24px] font-medium"
+                className="h-[56px] rounded-md text-[24px] font-medium"
               >
                 {k === "back" ? <Backspace size={24} className="text-gray-500" /> : k}
               </Button>
@@ -725,7 +728,7 @@ export default function NewDesignPage() {
           </div>
           <Button
             onClick={() => goPin(() => go("temp-success"))}
-            className="rounded-xl text-[13px] font-semibold"
+            className="rounded-md text-[13px] font-semibold"
           >
             Record Temperature
           </Button>
@@ -744,7 +747,7 @@ export default function NewDesignPage() {
       <p className="text-[14px] text-gray-400 mt-1.5">Cool Room · Saved</p>
       <Button
         onClick={() => { setHistory([]); setScreen("dashboard"); }}
-        className="mt-8 rounded-xl text-[13px] font-semibold"
+        className="mt-8 rounded-md text-[13px] font-semibold"
       >
         Back to Dashboard
       </Button>
@@ -767,8 +770,8 @@ export default function NewDesignPage() {
                 setSelectedProcessType(p);
                 if (p === "Cool") go("cool-process");
               }}
-              className={`rounded-2xl text-[13px] font-semibold ${
-                selectedProcessType !== p ? "shadow-sm hover:shadow-md" : ""
+              className={`rounded-md text-[13px] font-semibold ${
+                selectedProcessType !== p ? " hover:" : ""
               }`}
             >
               {p}
@@ -793,7 +796,7 @@ export default function NewDesignPage() {
           <p className="text-[13px] text-gray-400">Must reach ≥ 75°C to pass</p>
           <Button
             onClick={() => goPin(() => go("success-generic"))}
-            className="rounded-xl text-[13px] font-semibold"
+            className="rounded-md text-[13px] font-semibold"
           >
             Record
           </Button>
@@ -827,7 +830,7 @@ export default function NewDesignPage() {
               </div>
               <Button
                 onClick={() => goPin(() => go("success-generic"))}
-                className="mt-4 w-full rounded-xl text-[13px] font-semibold"
+                className="mt-4 w-full rounded-md text-[13px] font-semibold"
               >
                 Take Stage 1 Temperature
               </Button>
@@ -859,7 +862,7 @@ export default function NewDesignPage() {
             <CardContent className="p-5">
               <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Supplier</div>
               <Select>
-                <SelectTrigger className="rounded-xl text-[13px]">
+                <SelectTrigger className="rounded-md text-[13px]">
                   <SelectValue placeholder="Select supplier" />
                 </SelectTrigger>
                 <SelectContent>
@@ -881,7 +884,7 @@ export default function NewDesignPage() {
                     variant={deliveryMeat === g ? "default" : "secondary"}
                     size="sm"
                     onClick={() => setDeliveryMeat(g)}
-                    className="rounded-xl text-[13px] font-medium"
+                    className="rounded-md text-[13px] font-medium"
                   >
                     {g}
                   </Button>
@@ -898,7 +901,7 @@ export default function NewDesignPage() {
                     key={q}
                     variant={deliveryQuality === q ? "default" : "secondary"}
                     onClick={() => setDeliveryQuality(q)}
-                    className={`flex-1 rounded-xl text-[13px] font-semibold ${
+                    className={`flex-1 rounded-md text-[13px] font-semibold ${
                       deliveryQuality === q
                         ? q === "Acceptable"
                           ? "bg-emerald-500 hover:bg-emerald-600 text-white"
@@ -917,7 +920,7 @@ export default function NewDesignPage() {
                     key={q}
                     variant={deliveryQuantity === q ? "default" : "secondary"}
                     onClick={() => setDeliveryQuantity(q)}
-                    className={`flex-1 rounded-xl text-[13px] font-semibold ${
+                    className={`flex-1 rounded-md text-[13px] font-semibold ${
                       deliveryQuantity === q
                         ? q === "Acceptable"
                           ? "bg-emerald-500 hover:bg-emerald-600 text-white"
@@ -938,7 +941,7 @@ export default function NewDesignPage() {
             <CardContent className="p-5">
               <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Punctuality</div>
               <Select>
-                <SelectTrigger className="rounded-xl text-[13px]">
+                <SelectTrigger className="rounded-md text-[13px]">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
@@ -951,7 +954,7 @@ export default function NewDesignPage() {
           </Card>
           <Card className="py-0">
             <CardContent className="p-5">
-              <Button variant="secondary" className="w-full rounded-xl text-[13px] font-medium">
+              <Button variant="secondary" className="w-full rounded-md text-[13px] font-medium">
                 <Plus size={14} weight="bold" className="mr-1.5" />
                 Add Temperature
               </Button>
@@ -960,7 +963,7 @@ export default function NewDesignPage() {
           <Card className="py-0">
             <CardContent className="p-5">
               <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Photo</div>
-              <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center hover:border-gray-300 transition-colors cursor-pointer">
+              <div className="w-20 h-20 rounded-md border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center hover:border-gray-300 transition-colors cursor-pointer">
                 <Camera size={24} className="text-gray-400" />
               </div>
             </CardContent>
@@ -978,7 +981,7 @@ export default function NewDesignPage() {
                     key={o.label}
                     variant={deliveryOutcome === o.label ? "default" : "secondary"}
                     onClick={() => setDeliveryOutcome(o.label)}
-                    className={`flex-1 rounded-xl text-[13px] font-semibold ${
+                    className={`flex-1 rounded-md text-[13px] font-semibold ${
                       deliveryOutcome === o.label ? o.activeClass : ""
                     }`}
                   >
@@ -988,7 +991,7 @@ export default function NewDesignPage() {
               </div>
               <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2 mt-4">Comments</div>
               <Textarea
-                className="rounded-xl text-[13px] resize-none placeholder:text-gray-400"
+                className="rounded-md text-[13px] resize-none placeholder:text-gray-400"
                 placeholder="Optional notes..."
                 rows={3}
               />
@@ -996,7 +999,7 @@ export default function NewDesignPage() {
           </Card>
           <Button
             onClick={() => goPin(() => go("delivery-done"))}
-            className="rounded-xl text-[13px] font-semibold"
+            className="rounded-md text-[13px] font-semibold"
           >
             Submit Delivery
           </Button>
@@ -1016,14 +1019,14 @@ export default function NewDesignPage() {
       <div className="mt-8 flex flex-col gap-2.5 w-72">
         <Button
           onClick={() => { setHistory([]); setScreen("dashboard"); }}
-          className="rounded-xl text-[13px] font-semibold"
+          className="rounded-md text-[13px] font-semibold"
         >
           Create Task for Manager
         </Button>
         <Button
           variant="outline"
           onClick={() => { setHistory([]); setScreen("dashboard"); }}
-          className="rounded-xl text-[13px] font-medium"
+          className="rounded-md text-[13px] font-medium"
         >
           Skip
         </Button>
@@ -1059,7 +1062,7 @@ export default function NewDesignPage() {
             {checklistItems.map((item, i) => (
               <Card
                 key={i}
-                className="py-0 cursor-pointer hover:shadow-md transition-all"
+                className="py-0 cursor-pointer hover: transition-all"
                 onClick={() => {
                   setChecklistChecked((prev) => {
                     const next = [...prev];
@@ -1070,7 +1073,7 @@ export default function NewDesignPage() {
               >
                 <CardContent className="p-4 flex items-center gap-3">
                   <div
-                    className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                    className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
                       checklistChecked[i] ? "bg-emerald-500" : "border-2 border-gray-200"
                     }`}
                   >
@@ -1097,7 +1100,7 @@ export default function NewDesignPage() {
               if (checkedCount === 7) goPin(() => go("success-generic"));
             }}
             disabled={checkedCount !== 7}
-            className="mt-5 w-full rounded-xl text-[13px] font-semibold"
+            className="mt-5 w-full rounded-md text-[13px] font-semibold"
           >
             Submit for Review
           </Button>
@@ -1124,7 +1127,7 @@ export default function NewDesignPage() {
             <CardContent className="p-5">
               <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Completion Notes</div>
               <Textarea
-                className="rounded-xl text-[13px] resize-none placeholder:text-gray-400"
+                className="rounded-md text-[13px] resize-none placeholder:text-gray-400"
                 placeholder="Add notes..."
                 rows={5}
               />
@@ -1139,7 +1142,7 @@ export default function NewDesignPage() {
                 {[0, 1].map((i) => (
                   <div
                     key={i}
-                    className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-1 hover:border-gray-300 transition-colors cursor-pointer"
+                    className="w-20 h-20 rounded-md border-2 border-dashed border-gray-200 bg-gray-50 flex flex-col items-center justify-center gap-1 hover:border-gray-300 transition-colors cursor-pointer"
                   >
                     <Camera size={20} className="text-gray-400" />
                     <span className="text-[10px] text-gray-400 font-medium">Add</span>
@@ -1150,7 +1153,7 @@ export default function NewDesignPage() {
           </Card>
           <Button
             onClick={() => goPin(() => go("success-generic"))}
-            className="rounded-xl text-[13px] font-semibold"
+            className="rounded-md text-[13px] font-semibold"
           >
             Mark Complete
           </Button>
@@ -1202,7 +1205,7 @@ export default function NewDesignPage() {
               variant={k === "back" ? "ghost" : k === "" ? "ghost" : "outline"}
               onClick={() => handlePinKey(k)}
               disabled={k === ""}
-              className={`h-[56px] rounded-xl text-[24px] font-medium ${
+              className={`h-[56px] rounded-md text-[24px] font-medium ${
                 k === "" ? "cursor-default opacity-0" : ""
               }`}
             >
@@ -1224,7 +1227,7 @@ export default function NewDesignPage() {
       <p className="text-[14px] text-gray-400 mt-1.5">Action completed successfully</p>
       <Button
         onClick={() => { setHistory([]); setScreen("dashboard"); }}
-        className="mt-8 rounded-xl text-[13px] font-semibold"
+        className="mt-8 rounded-md text-[13px] font-semibold"
       >
         Back to Dashboard
       </Button>
@@ -1264,16 +1267,22 @@ export default function NewDesignPage() {
       <nav className="flex items-center gap-4 px-6 py-3 border-b border-[#1A1A28]">
         <Link
           href="/projects/hospitality-safe"
-          className="flex items-center gap-2 px-3 py-1.5 -ml-3 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-[#1A1A28] transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 -ml-3 rounded-md text-slate-400 hover:text-slate-100 hover:bg-[#1A1A28] transition-colors"
         >
-          <CaretLeft size={16} />
-          <UpstreamLogo size={18} />
-          <span>upstreamlab</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          <UpstreamLogo size={14} />
+          <span className="text-[12px] font-bold tracking-tight">
+            upstream<span className="text-[#31AD52]">lab</span>
+          </span>
         </Link>
-        <span className="text-slate-500">/</span>
-        <span className="text-slate-400">Hospitality Safe</span>
-        <span className="text-slate-500">/</span>
-        <span className="text-slate-200">New Design</span>
+        <span className="text-[11px] text-slate-600">/</span>
+        <Link href="/projects/hospitality-safe" className="text-[12px] text-slate-500 hover:text-slate-300 transition-colors">
+          Hospitality Safe
+        </Link>
+        <span className="text-[11px] text-slate-600">/</span>
+        <span className="text-[13px] font-semibold text-slate-200">Staff Prototype</span>
       </nav>
 
       {/* ─── iPad Frame ─── */}

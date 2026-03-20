@@ -58,8 +58,23 @@ const cards: ProjectCard[] = [
     },
   },
   {
-    title: "New Design",
-    description: "The redesigned Hospitality Safe app — new UI, improved workflows, and modern stack.",
+    title: "Design System",
+    description: "Color tokens, typography, spacing, radius, shadows, component library, and UI patterns for the Hospitality Safe redesign.",
+    route: "/projects/hospitality-safe/design-system",
+    status: "active",
+    preview: {
+      label: "Tokens & Components",
+      stats: ["Colors", "Typography", "Shadows", "Patterns"],
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E75B6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+      ),
+    },
+  },
+  {
+    title: "Staff Prototype",
+    description: "Staff iPad experience — timers, temperatures, labels, processes, and checklists. The hands-on kitchen interface.",
     route: "/projects/hospitality-safe/new-design",
     status: "active",
     preview: {
@@ -68,6 +83,21 @@ const cards: ProjectCard[] = [
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#31AD52" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 19l7-7 3 3-7 7-3-3z" /><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" /><path d="M2 2l7.586 7.586" /><circle cx="11" cy="11" r="2" />
+        </svg>
+      ),
+    },
+  },
+  {
+    title: "Manager Prototype",
+    description: "Mobile-first manager experience — review checklists, monitor temps, manage tasks and complaints on the floor.",
+    route: "/projects/hospitality-safe/manager",
+    status: "active",
+    preview: {
+      label: "Interactive Prototype",
+      stats: ["Mobile + iPad", "Manager role", "Review & Monitor"],
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2E75B6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="5" y="2" width="14" height="20" rx="2" /><path d="M12 18h.01" />
         </svg>
       ),
     },
@@ -130,7 +160,7 @@ export default function HospitalitySafeHub() {
             const isActive = card.status === "active";
             const inner = (
               <div
-                className={`rounded-xl border overflow-hidden transition-all ${
+                className={`rounded-md border overflow-hidden transition-all ${
                   isActive
                     ? "border-[#1A1A28] bg-[#11111B] hover:border-[#31AD52]/40 hover:bg-[#11111B]/80 cursor-pointer"
                     : "border-[#1A1A28]/60 bg-[#11111B]/50 opacity-50 cursor-default"
